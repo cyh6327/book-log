@@ -32,8 +32,14 @@ public class BookSentence {
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime createDate;
 
+    @ManyToOne
+    @JoinColumn(name = "book_key", referencedColumnName = "bookKey") // 외래 키 컬럼 설정
+    private Book book;
+
     @PrePersist // 엔티티가 데이터베이스에 저장되기 전에 호출
     public void prePersist() {
-        this.createDate = LocalDateTime.now();
+        if(createDate == null) {
+            this.createDate = LocalDateTime.now();
+        }
     }
 }

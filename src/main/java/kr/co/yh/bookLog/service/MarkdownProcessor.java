@@ -1,5 +1,6 @@
 package kr.co.yh.bookLog.service;
 
+import kr.co.yh.bookLog.entity.Book;
 import kr.co.yh.bookLog.entity.BookSentence;
 import kr.co.yh.bookLog.repository.BookSentenceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +25,9 @@ public class MarkdownProcessor extends FileProcessor {
     @Autowired
     BookSentenceRepository bookSentenceRepository;
 
+    @Autowired
+    BookService bookService;
+
     @Override
     protected Resource[] getFiles(String path) throws IOException {
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -30,9 +35,9 @@ public class MarkdownProcessor extends FileProcessor {
     }
 
     @Override
-    protected String readFiles(Resource resource) throws IOException {
+    protected String[] readFiles(Resource resource) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
-            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
+            return new String[] {resource.getFilename().split("\\.")[0], reader.lines().collect(Collectors.joining(System.lineSeparator())) };
         }
     }
 
@@ -57,11 +62,14 @@ public class MarkdownProcessor extends FileProcessor {
     }
 
     @Override
-    protected List<BookSentence> insertSentences(String[] markdownTexts) {
+    protected List<BookSentence> insertSentences(String title, String[] markdownTexts) {
+        Book book = bookService.getBookByTitle(title);
+
         List<BookSentence> sentences = new ArrayList<>();
+        LocalDateTime specificDateTime = LocalDateTime.of(2024, 12, 23, 15, 30);
 
         for(String text : markdownTexts) {
-            BookSentence sentence = BookSentence.builder().text(text).favoriteFlag('N').build();
+            BookSentence sentence = BookSentence.builder().book(book).text(text).favoriteFlag('N').createDate(specificDateTime).build();
             sentences.add(sentence);
         }
 

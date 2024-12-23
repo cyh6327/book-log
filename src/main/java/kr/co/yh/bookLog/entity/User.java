@@ -39,9 +39,22 @@ public class User {
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime joinDate;
 
+    @Column
+    private Integer lastFetchedRow = 0;
+
+    @Column
+    @Temporal(TemporalType.TIMESTAMP)
+    // 데이터 선정 기준이 되는 날짜. 메일 전송 시 해당 날짜 이전에 생성된 book_sentence 레코드를 조회한다
+    private LocalDateTime sentenceCutoffDate;
+
     @PrePersist // 엔티티가 데이터베이스에 저장되기 전에 호출
     public void prePersist() {
         this.sortKey = Math.random();
         this.joinDate = LocalDateTime.now();
+        this.lastFetchedRow = 0;
+    }
+
+    public void setSentenceCutoffDateToNow() {
+        this.sentenceCutoffDate = LocalDateTime.now();
     }
 }

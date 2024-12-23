@@ -11,18 +11,21 @@ public abstract class FileProcessor {
         Resource[] files = getFiles(path);
 
         for(Resource file : files) {
-            String fileText = readFiles(file);
+            String[] fileInfo = readFiles(file);
+            String fileTitle = fileInfo[0];
+            String fileText = fileInfo[1];
+
             String[] processedTexts = processFiles(fileText);
-            insertSentences(processedTexts);
+            insertSentences(fileTitle, processedTexts);
         }
 
     }
 
     protected abstract Resource[] getFiles(String path) throws IOException;
 
-    protected abstract String readFiles(Resource resource) throws IOException;
+    protected abstract String[] readFiles(Resource resource) throws IOException;
 
     protected abstract String[] processFiles(String text);
 
-    protected abstract List<BookSentence> insertSentences(String[] markdownTexts);
+    protected abstract List<BookSentence> insertSentences(String title, String[] markdownTexts);
 }
