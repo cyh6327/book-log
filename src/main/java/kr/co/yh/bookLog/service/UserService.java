@@ -13,13 +13,6 @@ import java.util.List;
 public class UserService {
     @Autowired
     UserRepository userRepository;
-    public LocalDateTime updateSentenceCutoffDateToNow(User user) {
-        if (user.getSentenceCutoffDate() == null) {
-            user.setSentenceCutoffDateToNow();
-            userRepository.save(user);
-        }
-        return user.getSentenceCutoffDate();
-    }
 
     public List<User> getActiveUsers() {
         return userRepository.findByStatus(UserStatus.ACTIVE)
@@ -33,5 +26,13 @@ public class UserService {
     public User findUserById(Long userKey) {
         return userRepository.findById(userKey)
                 .orElseThrow(() -> new RuntimeException("User not found with user_key: " + userKey));
+    }
+
+    public void updateUserAfterSendMail(User user, LocalDateTime sentenceCutoffDate, Integer lastFetchedRow) {
+        user.updateUserAfterSendMail(sentenceCutoffDate, lastFetchedRow);
+    }
+
+    public void updateUsers(List<User> usersToUpdate) {
+        userRepository.saveAll(usersToUpdate);
     }
 }

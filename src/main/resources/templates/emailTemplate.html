@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Template</title>
+</head>
+<body style="font-family: 'Noto Sans', sans-serif; background-color: #ffffff; padding: 20px;">
+<div role="article" lang="en" style="padding: 20px 0; margin: 0 auto; background: #ffffff;">
+    <table style="width: 100%; background: #ffffff" border="0">
+        <tbody>
+        <tr>
+            <td align="center">
+                <div style="width: 100%; max-width: 630px; background: #ffffff; margin: 0 auto;">
+
+                    <!-- Body content starts here -->
+                    <div th:each="sentence : ${sentences}">
+                        <div style="border: 3px solid rgba(208,173,240,0.3); border-radius: 20px; margin: 50px 0;">
+                            <div style="word-break: break-all; text-align: left; margin: 0; line-height: 1.7; font-size: 14px; color: #000000; padding: 30px;">
+                                <span th:utext="${sentence.text}" style="padding: 0; list-style-type: none;"></span>
+                            </div>
+                            <div style="padding: 0 30px 30px;">
+                                <span style="color: #888888;" th:text="'[' + ${sentence.title} + '] ' + ${sentence.author}"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Body content ends here -->
+
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

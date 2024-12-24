@@ -51,10 +51,13 @@ public class User {
     public void prePersist() {
         this.sortKey = Math.random();
         this.joinDate = LocalDateTime.now();
-        this.lastFetchedRow = 0;
+        if(lastFetchedRow == null) {
+            this.lastFetchedRow = 0;
+        }
     }
 
-    public void setSentenceCutoffDateToNow() {
-        this.sentenceCutoffDate = LocalDateTime.now();
+    public void updateUserAfterSendMail(LocalDateTime sentenceCutoffDate, Integer lastFetchedRow) {
+        this.sentenceCutoffDate = sentenceCutoffDate;
+        this.lastFetchedRow = lastFetchedRow;
     }
 }

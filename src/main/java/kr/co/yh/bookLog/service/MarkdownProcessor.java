@@ -44,12 +44,13 @@ public class MarkdownProcessor extends FileProcessor {
     @Override
     protected String[] processFiles(String text) {
         /*
-        마크다운 특수 기호 제거 : _, ~, `, #, +, -, |, \\, /
+        마크다운 특수 기호 제거 : _, `, #, +, -, |, \\
+        페이지 표기 제거 : ex) p.123
         예외사항
             1) --- : 문장 분할 기준
             2) * : 강조 문법인데 주로 인용문에 사용했기 때문에 메일 전송 시 이탤릭체로 변경 필요
         */
-        String regex = "(?<!\\-\\-\\-)[\\_\\~\\`\\#\\+\\|\\\\\\/](?!\\-)";
+        String regex = "(?<!\\\\-\\\\-\\\\-)[\\\\_\\\\`\\\\#\\\\+\\\\|\\\\\\\\](?!\\\\-)|p\\.\\d+";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(text);
 

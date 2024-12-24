@@ -4,7 +4,6 @@ import kr.co.yh.bookLog.entity.User;
 import kr.co.yh.bookLog.entity.UserStatus;
 import kr.co.yh.bookLog.repository.UserRepository;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,25 +25,19 @@ class UserServiceTest {
     private User user;
     private Long userKey;
 
-    @BeforeEach
-    void setUp() {
-        User entity = User.builder().name("test").email("test@gmail.com").status(UserStatus.ACTIVE).build();
+    void setUpUser() {
+        LocalDateTime date = LocalDateTime.of(2024, 12, 15, 8, 0, 0);
+        Double sortKey = 0.07853173718031747;
+        User entity = User.builder().name("test").email("test@gmail.com").status(UserStatus.ACTIVE).sentenceCutoffDate(date).sortKey(sortKey).build();
         user = userRepository.save(entity);
         userKey = user.getUserKey();
     }
 
     @Test
+    @Rollback(value = false)
     void testInsert() {
         User user = User.builder().name("최연희").email("cyh6327@gmail.com").status(UserStatus.ACTIVE).build();
         userRepository.save(user);
-    }
-
-    @Test
-    @Rollback
-    void updateSentenceCutoffDateToNow() {
-        LocalDateTime date = userService.updateSentenceCutoffDateToNow(user);
-
-        Assertions.assertThat(date).isNotNull();
     }
 
     @Test
@@ -55,23 +48,21 @@ class UserServiceTest {
     }
 
     @Test
-    @Rollback
     void updateLastFetchedRow() {
+        setUpUser();
+
         List<Long> key = List.of(userKey);
         Integer increment = 5;
 
         int result = userService.updateLastFetchedRow(key, increment);
 
         Assertions.assertThat(result).isEqualTo(1);
-
-//        User updatedUser = userService.findUserById(userKey);
-//        Integer updatedRow = updatedUser.getLastFetchedRow();
-//
-//        Assertions.assertThat(updatedRow).isEqualTo(lastFetchedRow+increment);
     }
 
     @Test
     void findUserById() {
+        setUpUser();
+
         User user = userService.findUserById(userKey);
 
         Assertions.assertThat(user).isNotNull();

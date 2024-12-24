@@ -10,10 +10,12 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,39 +42,36 @@ public class MailService {
     public void sendEmailsToActiveUsers() {
         List<User> users = userService.getActiveUsers();
 
+        ConcurrentLinkedQueue<User> successUsers = new ConcurrentLinkedQueue<>();
         ConcurrentLinkedQueue<Long> failedUserKeys = new ConcurrentLinkedQueue<>();
 
         // 사용자 리스트를 병렬 스트림으로 처리하여 비동기적으로 이메일 전송
         users.parallelStream().forEach(user -> {
             try {
-                sendEmail(user);
+                User userToUpdate = sendEmail(user);
+                successUsers.add(userToUpdate);
             } catch (Exception e) {
                 failedUserKeys.add(user.getUserKey());
                 e.printStackTrace();
             }
         });
 
-        LocalDate today = LocalDate.now();
+        // 성공적으로 메일 전송한 사용자 업데이트
+        List<User> usersToUpdate = new ArrayList<>(successUsers);
+        if (!usersToUpdate.isEmpty()) {
+            userService.updateUsers(usersToUpdate);
+        }
 
-        // 성공한 사용자 lastFetchedRow 업데이트
-        List<Long> successUserKeys = users.stream()
-                // lastFetchedRow 가 0 이 아니고 sentenceCutoffDate 가 오늘인 경우는 getBookSentences() 에서 이미 updateLastFetchedRow 를 진행했으므로 제외한다
-                .filter(user -> user.getLastFetchedRow() == 0 || !user.getSentenceCutoffDate().toLocalDate().equals(today))
-                .map(User::getUserKey)
-                .filter(userKey -> !failedUserKeys.contains(userKey))
-                .collect(Collectors.toList());
-
-        if(!successUserKeys.isEmpty())
-            userService.updateLastFetchedRow(successUserKeys, INCREMENT);
-
-        // 실패한 사용자 로그 출력
+        // TODO: 실패한 사용자 로그 파일 저장하도록
         for (Long key : failedUserKeys) {
             System.out.println(key);
         }
     }
 
-    private void sendEmail(User user) {
-        List<Object[]> sentences = bookService.getBookSentences(user.getUserKey(), INCREMENT);
+    private User sendEmail(User user) {
+        Map<String,Object> resultMap = bookService.getBookSentences(user.getUserKey(), INCREMENT);
+        List<Object[]> sentences = (List<Object[]>) resultMap.get("sentences");
+        User userToUpdate = (User) resultMap.get("user");
 
         // Thymeleaf 템플릿 데이터 설정
         Context context = new Context();
@@ -85,6 +84,8 @@ public class MailService {
 
         // 이메일 전송
         send(to, "오늘의 문장이 도착했습니다.", body);
+
+        return userToUpdate;
     }
 
     private List<MailContent> formatSentences(List<Object[]> sentences) {
@@ -142,6 +143,10 @@ class MailContent {
     }
 
     public void setText(String text) {
-        this.text = text.replaceAll("\n", "<br>");
+        // *문장*을 찾아서 <i>문장</i>으로 변경
+        Pattern pattern = Pattern.compile("\\*(.*?)\\*");
+        Matcher matcher = pattern.matcher(text);
+
+        this.text = matcher.replaceAll("<i>$1</i>").replaceAll("\n", "<br>");
     }
 }

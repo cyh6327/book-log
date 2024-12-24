@@ -14,8 +14,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class BookService {
@@ -63,34 +62,45 @@ public class BookService {
                 .orElseThrow(() -> new RuntimeException("Book not found with title: " + title));
     }
 
-    public List<Object[]> getBookSentences(Long userKey, Integer limit) {
+    public Map<String,Object> getBookSentences(Long userKey, Integer limit) {
         User user = userService.findUserById(userKey);
 
         LocalDateTime sentenceCutoffDate = user.getSentenceCutoffDate();
-        // 최초 서비스 요청인 경우
-        if (sentenceCutoffDate == null) {
-            sentenceCutoffDate = userService.updateSentenceCutoffDateToNow(user);
-        }
 
         LocalDateTime getMinCreateDate = getMinCreateDate();
-        List<Object[]> sentences = bookSentenceService.getSentences(userKey, limit, getMinCreateDate, sentenceCutoffDate.minusDays(1));
-        if (sentences == null) {
-            throw new RuntimeException("No sentences found for user with user_key: " + userKey);
-        }
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime toDate = Objects.requireNonNullElse(sentenceCutoffDate, now);
 
-        if(sentences.size() < limit) {
-            LocalDateTime now = LocalDateTime.now();
+        List<Object[]> sentences = bookSentenceService.getSentences(userKey, limit, getMinCreateDate, toDate.minusDays(1));
+
+        LocalDateTime updateSentenceCutoffDate = now;
+        Integer updateLastFetchedRow = limit;
+
+        if(sentences.size() == limit) { // 일반적인 상황
+            if(sentenceCutoffDate != null) {
+                updateSentenceCutoffDate = sentenceCutoffDate;  // 그대로 유지
+            }
+        } else if(sentences.size() < limit) {   // sentenceCutoffDate 이전의 데이터를 모두 한 번씩 조회한 상황 -> 조회 기준 변경
             Integer additionalCnt = limit-sentences.size();
 
             List<Object[]> additionalSentences = bookSentenceService.getSentences(userKey, additionalCnt, sentenceCutoffDate, now.minusDays(1));
             sentences.addAll(additionalSentences);
 
-            List<Long> key = List.of(userKey);
-            userService.updateSentenceCutoffDateToNow(user);
-            userService.updateLastFetchedRow(key, additionalCnt);
+            updateLastFetchedRow = additionalCnt;
+
+            if(sentences.size() != limit)
+                throw new IllegalStateException("Sentences size is not the same as limit.");
+        } else {
+            throw new IllegalStateException("Sentences size exceeded the limit.");
         }
 
-        return sentences;
+        userService.updateUserAfterSendMail(user, updateSentenceCutoffDate, updateLastFetchedRow);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("sentences", sentences);
+        result.put("user", user);
+
+        return result;
     }
 
     private LocalDateTime getMinCreateDate() {

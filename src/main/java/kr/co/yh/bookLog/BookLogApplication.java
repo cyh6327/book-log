@@ -2,7 +2,7 @@ package kr.co.yh.bookLog;
 
 import kr.co.yh.bookLog.service.BookService;
 import kr.co.yh.bookLog.service.FileProcessor;
-import kr.co.yh.bookLog.service.MarkdownProcessor;
+import kr.co.yh.bookLog.service.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
@@ -18,6 +18,9 @@ public class BookLogApplication implements CommandLineRunner {
 	private BookService bookService;
 
 	@Autowired
+	private MailService mailService;
+
+	@Autowired
 	@Qualifier("markdownProcessor")
 	private FileProcessor fileProcessor;
 
@@ -29,6 +32,7 @@ public class BookLogApplication implements CommandLineRunner {
 	public void run(String... args) throws Exception {
 		//insertBooks("book_csv/book.csv");
 		//insertSentences("sentence_md/*.md");
+		sendMail();
 	}
 
 	void insertBooks(String path) throws IOException {
@@ -37,5 +41,9 @@ public class BookLogApplication implements CommandLineRunner {
 
 	void insertSentences(String path) throws IOException {
 		fileProcessor.processAndInsert(path);
+	}
+
+	void sendMail() {
+		mailService.sendEmailsToActiveUsers();
 	}
 }
