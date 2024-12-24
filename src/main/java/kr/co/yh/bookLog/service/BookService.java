@@ -74,7 +74,7 @@ public class BookService {
         List<Object[]> sentences = bookSentenceService.getSentences(userKey, limit, getMinCreateDate, toDate.minusDays(1));
 
         LocalDateTime updateSentenceCutoffDate = now;
-        Integer updateLastFetchedRow = limit;
+        Integer updateLastFetchedRow = user.getLastFetchedRow()+limit;
 
         if(sentences.size() == limit) { // 일반적인 상황
             if(sentenceCutoffDate != null) {
