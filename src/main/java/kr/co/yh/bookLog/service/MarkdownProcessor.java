@@ -67,10 +67,9 @@ public class MarkdownProcessor extends FileProcessor {
         Book book = bookService.getBookByTitle(title);
 
         List<BookSentence> sentences = new ArrayList<>();
-        LocalDateTime specificDateTime = LocalDateTime.of(2024, 12, 23, 15, 30);
 
         for(String text : markdownTexts) {
-            BookSentence sentence = BookSentence.builder().book(book).text(text).favoriteFlag('N').createDate(specificDateTime).build();
+            BookSentence sentence = BookSentence.builder().book(book).text(text).favoriteFlag('N').build();
             sentences.add(sentence);
         }
 
