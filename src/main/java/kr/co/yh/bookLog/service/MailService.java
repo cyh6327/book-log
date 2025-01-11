@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,9 +144,12 @@ class MailContent {
     }
 
     public void setText(String text) {
+        // HTML 특수 문자 이스케이프
+        String escapedText = StringEscapeUtils.escapeHtml4(text);
+
         // *문장*을 찾아서 <i>문장</i>으로 변경
         Pattern pattern = Pattern.compile("\\*(.*?)\\*");
-        Matcher matcher = pattern.matcher(text);
+        Matcher matcher = pattern.matcher(escapedText);
 
         this.text = matcher.replaceAll("<i>$1</i>").replaceAll("\n", "<br>");
     }
